@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍳 Food Journey - Alacena y Recetario Inteligente
 
-## Getting Started
+Food Journey es una plataforma web innovadora diseñada para optimizar la gestión alimentaria en el hogar. Nuestra misión es reducir el desperdicio de comida, evitar compras innecesarias y transformar los ingredientes disponibles en recomendaciones gastronómicas dinámicas y sostenibles mediante Inteligencia Artificial.
 
-First, run the development server:
+## 🚀 Tecnologías Principales
 
-```bash
+Este proyecto está construido con un stack moderno y escalable:
+
+- **Framework:** [Next.js 14+](https://nextjs.org/) (App Router)
+- **Frontend:** React, Tailwind CSS, Lucide React (Iconos)
+- **Backend (BaaS):** [Supabase](https://supabase.com/) (Autenticación OAuth/Email y Base de Datos PostgreSQL)
+- **Inteligencia Artificial:** [Google Gemini API](https://aistudio.google.com/) (Clasificación automática de alimentos)
+- **Despliegue sugerido:** Vercel
+
+---
+
+## 📂 Estructura del Proyecto
+
+El proyecto sigue la estructura recomendada del App Router de Next.js, separando claramente la UI, la lógica de servidor y los clientes de base de datos.
+
+```text
+food-journal/
+├── app/                        # Rutas de la aplicación (Next.js App Router)
+│   ├── api/classify/route.ts   # Endpoint de Backend para IA (Gemini)
+│   ├── auth/callback/route.ts  # Manejador del login con Supabase
+│   ├── dashboard/              # Vistas protegidas del usuario
+│   │   ├── layout.tsx          # Menú lateral (Sidebar) retráctil
+│   │   └── pantry/page.tsx     # Vista principal de la Alacena Digital
+│   └── page.tsx                # Landing Page pública
+├── components/                 # Componentes UI reutilizables
+│   ├── auth/                   # Modales de Login/Registro
+│   ├── layout/                 # Navbar y Footer públicos
+│   └── pantry/                 # Tarjetas de ingredientes y Notificaciones
+├── utils/
+│   └── supabase/               # Configuración de Supabase
+│       ├── client.ts           # Cliente para componentes de React
+│       └── server.ts           # Cliente para Server Components/APIs
+├── public/                     # Imágenes, iconos estáticos
+├── .env.local                  # Variables de entorno (¡NO SUBIR A GITHUB!)
+├── tailwind.config.ts          # Configuración de estilos
+└── package.json                # Dependencias del proyecto
+
+## Clonar repositorio
+git clone [https://github.com/DylanIsaac2810/FoodJournal.git](https://github.com/DylanIsaac2810/FoodJournal.git)
+cd food-journal
+
+##Instalar dependencias
+npm install
+-- Si surgen errores ejecutar:
+npm install @supabase/supabase-js @supabase/ssr @google/generative-ai lucide-react
+
+##Levantar servidor
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
