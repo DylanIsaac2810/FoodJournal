@@ -2,31 +2,39 @@
 
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Loader2, ChefHat, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
+// ─── OPCIONES SINCRONIZADAS CON EL PERFIL ─────────────────────────────────
 const DIETARY_OPTIONS = [
-  { id: 'Ninguna', label: 'Ninguna', icon: '🍽️' },
+  { id: 'Balanceado', label: 'Balanceado', icon: '⚖️' },
   { id: 'Vegetariano', label: 'Vegetariano', icon: '🥗' },
   { id: 'Vegano', label: 'Vegano', icon: '🌱' },
-  { id: 'Sin Gluten', label: 'Sin Gluten', icon: '🌾' },
   { id: 'Keto', label: 'Keto', icon: '🥑' },
+  { id: 'Sin Gluten', label: 'Sin Gluten', icon: '🌾' },
+  { id: 'Sin Lácteos', label: 'Sin Lácteos', icon: '🚫🥛' },
+  { id: 'Pescatariano', label: 'Pescatariano', icon: '🐟' },
 ];
 
 const ALLERGY_OPTIONS = [
   { id: 'Ninguna', label: 'Ninguna', icon: '✅' },
-  { id: 'Lácteos', label: 'Lácteos', icon: '🥛' },
-  { id: 'Maní/Nueces', label: 'Nueces', icon: '🥜' },
+  { id: 'Nueces', label: 'Nueces', icon: '🥜' },
   { id: 'Mariscos', label: 'Mariscos', icon: '🦐' },
-  { id: 'Soya', label: 'Soya', icon: '🫘' },
   { id: 'Huevo', label: 'Huevo', icon: '🥚' },
+  { id: 'Lácteos', label: 'Lácteos', icon: '🥛' },
+  { id: 'Soya', label: 'Soya', icon: '🫘' },
+  { id: 'Gluten', label: 'Gluten', icon: '🌾' },
+  { id: 'Pescado', label: 'Pescado', icon: '🐟' },
 ];
 
 const TOOLS_OPTIONS = [
-  { id: 'Estufa', label: 'Estufa', icon: '🔥' },
   { id: 'Horno', label: 'Horno', icon: '🌡️' },
   { id: 'Microondas', label: 'Microondas', icon: '🍱' },
-  { id: 'Air Fryer', label: 'Air Fryer', icon: '🌪️' },
   { id: 'Licuadora', label: 'Licuadora', icon: '🥤' },
+  { id: 'Sartén', label: 'Sartén', icon: '🍳' },
+  { id: 'Olla de presión', label: 'Olla de presión', icon: '🍲' },
+  { id: 'Air Fryer', label: 'Air Fryer', icon: '🌪️' },
+  { id: 'Batidora', label: 'Batidora', icon: '🥣' },
+  { id: 'Procesador de alimentos', label: 'Procesador', icon: '⚙️' },
 ];
 
 export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
@@ -103,11 +111,11 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
             />
           </div>
 
-          {/* Opciones (Reducimos gaps y padding) */}
+          {/* Opciones */}
           {[
-            { title: "Alergias", list: selectedAllergies, setList: setSelectedAllergies, options: ALLERGY_OPTIONS, isTool: false },
-            { title: "Preferencias", list: selectedDiets, setList: setSelectedDiets, options: DIETARY_OPTIONS, isTool: false },
-            { title: "Herramientas", list: selectedTools, setList: setSelectedTools, options: TOOLS_OPTIONS, isTool: true },
+            { title: "Alergias e Intolerancias", list: selectedAllergies, setList: setSelectedAllergies, options: ALLERGY_OPTIONS, isTool: false },
+            { title: "Preferencias Dietéticas", list: selectedDiets, setList: setSelectedDiets, options: DIETARY_OPTIONS, isTool: false },
+            { title: "Herramientas de Cocina", list: selectedTools, setList: setSelectedTools, options: TOOLS_OPTIONS, isTool: true },
           ].map((section, idx) => (
             <div key={idx}>
               <label className="block text-xs font-bold text-[#335C67] mb-2">{section.title}</label>
@@ -124,7 +132,7 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
                           : 'border-gray-200 bg-white text-[#5a8a96] hover:border-gray-300'
                       }`}
                     >
-                      {opt.icon} {opt.label}
+                      {opt.icon} <span className="truncate">{opt.label}</span>
                     </button>
                   );
                 })}
@@ -138,7 +146,7 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
           <button 
             onClick={handleSave}
             disabled={isSaving}
-            className="w-full py-3 bg-[#335C67] hover:bg-[#234149] text-[#FFF3B0] font-bold rounded-xl flex justify-center gap-2 transition-colors shadow-md"
+            className="w-full py-3 bg-[#335C67] hover:bg-[#234149] text-[#FFF3B0] font-bold rounded-xl flex justify-center gap-2 transition-colors shadow-md disabled:opacity-50"
           >
             {isSaving ? <Loader2 size={20} className="animate-spin" /> : "Comenzar mi viaje culinario"}
           </button>

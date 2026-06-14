@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import { useState, useEffect, useRef } from "react";
 import {
   ChefHat, Clock, Users, Plus, Minus,
@@ -43,9 +43,6 @@ function CookingTimer({ defaultMinutes }: { defaultMinutes: number }) {
             </span>
           </div>
         </div>
-      </div>
-      <div className="text-center py-2.5 rounded-2xl" style={{ backgroundColor: "rgba(255,243,176,0.1)", color: "#FFF3B0", fontWeight: 600, fontSize: 13 }}>
-        Modo Cocinar próximamente...
       </div>
     </div>
   );
@@ -282,7 +279,7 @@ export default function RecipeView() {
               <span className="px-3 py-1 rounded-full bg-[#335C67] text-[#FFF3B0] font-mono font-bold">{servings}</span>
             </div>
             <input type="range" min={1} max={10} value={servings} onChange={(e) => setServings(Number(e.target.value))} className="w-full accent-[#9E2A2B] h-1" />
-            <div className="flex justify-between text-xs text-gray-400 mt-2"><span>1 pax</span><span>10 pax</span></div>
+            <div className="flex justify-between text-xs text-gray-400 mt-2"><span>1 mín</span><span>10 max</span></div>
           </div>
 
           <button
@@ -397,7 +394,7 @@ export default function RecipeView() {
                 <p className="text-[#5a8a96] leading-relaxed mb-10 text-lg font-medium">{selectedRecipe.description}</p>
                 
                 <div className="mb-10 p-8 bg-[#FFFAE6] rounded-3xl border border-[#E09F3E]/20 shadow-inner">
-                  <h3 className="font-serif text-xl font-bold text-[#335C67] mb-4">Ingredientes ({selectedRecipe.servings} pax)</h3>
+                  <h3 className="font-serif text-xl font-bold text-[#335C67] mb-4">Ingredientes ({selectedRecipe.servings} porciones)</h3>
                   <h4 className="text-sm font-bold text-[#335C67] mb-2 uppercase opacity-70">En tu Alacena:</h4>
                   <ul className="space-y-3 mb-6">
                     {selectedRecipe.ownedIngredients?.map((ing: any, i:number) => (
@@ -442,10 +439,13 @@ export default function RecipeView() {
                 <CookingTimer defaultMinutes={selectedRecipe.time || 30} />
 
                 <div className="bg-white rounded-3xl p-6 border border-[#335C67]/10 shadow-sm text-center">
-                   <h3 className="font-bold text-[#335C67] mb-4 text-lg">¿Todo listo?</h3>
-                   <button className="w-full py-4 rounded-2xl bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold flex items-center justify-center gap-2 transition-all shadow-md">
-                     <Flame size={20} /> ¡A Cocinar!
-                   </button>
+                  <h3 className="font-bold text-[#335C67] mb-4 text-lg">¿Todo listo?</h3>
+                      <Link 
+                        href="/dashboard/cook"
+                        className="w-full py-4 rounded-2xl bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold flex items-center justify-center gap-2 transition-all shadow-md"
+                      >
+                    <Flame size={20} /> ¡A Cocinar!
+                  </Link>
                 </div>
 
                 <div className="bg-white rounded-3xl p-6 border border-[#335C67]/10 shadow-sm">

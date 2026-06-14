@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     `;
 
     const prompt = `
-      Eres un Chef experto en gestión de despensa inteligente. Crea 3 recetas basadas en:
+      Eres un Chef experto en gestión de despensa inteligente. Crea 1 receta basada en:
       1. ALACENA (Prioriza los que caducan pronto): ${pantryText || "Ninguno"}
       2. PERFIL DEL USUARIO: ${profileText}
       3. FILTROS SOLICITADOS: ${filters.join(', ') || "Ninguno"}

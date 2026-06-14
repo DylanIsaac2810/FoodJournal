@@ -151,7 +151,7 @@ export default function DashboardLayout({
 
       {/* Área Principal de Contenido */}
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0 bg-[#FFFAE6]">
-        <div className="p-6 md:p-10 max-w-7xl mx-auto min-h-full transition-all duration-300">
+        <div className="p-6 md:p-10 max-w-1xl mx-auto min-h-full transition-all duration-300">
           {children}
         </div>
       </main>

@@ -9,7 +9,7 @@ Este proyecto está construido con un stack moderno y escalable:
 - **Framework:** [Next.js 14+](https://nextjs.org/) (App Router)
 - **Frontend:** React, Tailwind CSS, Lucide React (Iconos)
 - **Backend (BaaS):** [Supabase](https://supabase.com/) (Autenticación OAuth/Email y Base de Datos PostgreSQL)
-- **Inteligencia Artificial:** [Google Gemini API](https://aistudio.google.com/) (Clasificación automática de alimentos)
+- **Inteligencia Artificial:** [Google Gemini API](https://aistudio.google.com/) (Clasificación automática de alimentos y generación de recetas)
 - **Despliegue sugerido:** Vercel
 
 ---
