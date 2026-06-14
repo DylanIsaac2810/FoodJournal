@@ -21,7 +21,11 @@ export function Navbar({ onLoginClick }: NavbarProps) {
       style={{ backgroundColor: "#335C67" }}
     >
       <div className="flex items-center gap-2">
-        <ChefHat size={28} color="#FFF3B0" />
+        <img 
+          src="/img/logo.png" 
+          alt="Logo Food Journey" 
+          className="h-14 w-auto drop-shadow-sm"
+        />
         <span
           className="text-xl"
           style={{ fontFamily: "'Playfair Display', serif", color: "#FFF3B0", fontWeight: 700 }}

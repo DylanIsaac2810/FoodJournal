@@ -5,7 +5,11 @@ export function Footer() {
     <footer className="py-10 px-8" style={{ backgroundColor: "#335C67" }}>
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <ChefHat size={22} color="#FFF3B0" />
+          <img 
+            src="/img/logo.png" 
+            alt="Logo Food Journey" 
+            className="h-14 w-auto drop-shadow-sm"
+          />
           <span
             style={{ fontFamily: "'Playfair Display', serif", color: "#FFF3B0", fontWeight: 700, fontSize: 18 }}
           >

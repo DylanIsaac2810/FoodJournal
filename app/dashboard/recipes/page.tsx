@@ -1,214 +1,497 @@
 'use client';
 
 import { useState, useEffect, useRef } from "react";
-import { Clock, Users, Play, Pause, RotateCcw, Plus, Minus, Star, ShoppingCart, AlertCircle, CheckCircle2, Timer } from "lucide-react";
+import {
+  ChefHat, Clock, Users, Plus, Minus,
+  Star, ShoppingCart, AlertCircle, CheckCircle2, Timer,
+  Sparkles, Camera, SlidersHorizontal, X, ChevronDown,
+  ChevronUp, Flame, History, Heart, Loader2
+} from "lucide-react";
+import { createClient } from '@/utils/supabase/client';
 
-const filters = [
-  { label: "Todas", value: "all" },
-  { label: "🌱 Vegano", value: "vegan" },
-  { label: "🥗 Baja Grasa", value: "lowfat" },
-  { label: "⚡ Rápida", value: "quick" },
-  { label: "🌾 Sin Gluten", value: "glutenfree" },
+// ─── Filter categories ───────────────────────────────────────────────────────
+const filterCategories = [
+  { id: "mealType", label: "Tipo de Comida", options: ["Desayuno", "Comida", "Cena", "Snack", "Colación", "Entrada", "Bebida"] },
+  { id: "dishType", label: "Tipo de Platillo", options: ["Plato fuerte", "Ensalada", "Sopa", "Pasta", "Sandwich", "Taco", "Hamburguesa", "Botana", "Postre", "Bebida"] },
+  { id: "flavor", label: "Perfil de Sabor", options: ["Dulce", "Salado", "Picante", "Agridulce", "Ácido", "Umami", "Cremoso", "Ahumado", "Cítrico", "Especiado"] },
+  { id: "nutrition", label: "Nutrición y Dieta", options: ["Alto en proteína", "Bajo en carbohidratos", "Bajo en calorías", "Alto en fibra", "Keto", "Vegetariano", "Vegano", "Sin gluten", "Sin lactosa", "Balanceado"] },
+  { id: "cuisine", label: "Cocina / Región", options: ["Mexicana", "Italiana", "Japonesa", "China", "Coreana", "India", "Francesa", "Española", "Mediterránea", "Estadounidense"] },
+  { id: "occasion", label: "Ocasión", options: ["Diario", "Escolar", "Oficina", "Fiesta", "Cumpleaños", "Reunión familiar", "Parrillada", "Navidad", "Año Nuevo", "Evento especial"] },
+  { id: "temperature", label: "Temperatura del Platillo", options: ["Caliente", "Tibio", "Frío"] },
 ];
 
-const recipes = [
-  {
-    id: 1,
-    name: "Curry de Espinacas y Garbanzos",
-    tags: ["vegan", "lowfat", "glutenfree"],
-    time: 30,
-    servings: 4,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop&auto=format",
-    description: "Un curry reconfortante hecho con básicos de la alacena y espinacas frescas. Rico en proteína vegetal y hierro.",
-    missingIngredients: ["Leche de coco", "Garam masala"],
-    ownedIngredients: ["Espinaca", "Garbanzos", "Ajo", "Aceite de Oliva", "Tomates Cherry"],
-    steps: [
-      { step: 1, instruction: "Calienta aceite de oliva a fuego medio. Añade el ajo y fríe por 2 min.", time: 3 },
-      { step: 2, instruction: "Añade tomates cherry y cocina por 5 min presionando suavemente.", time: 5 },
-      { step: 3, instruction: "Agrega garbanzos, especias y mezcla bien.", time: 2 },
-      { step: 4, instruction: "Vierte leche de coco y cocina a fuego lento por 10 min.", time: 10 },
-      { step: 5, instruction: "Agrega espinacas hasta que se marchiten. Sazona al gusto.", time: 5 }
-    ],
-    nutrition: { calorías: 320, proteína: "14g", carbohidratos: "38g", grasas: "12g" },
-  }
-];
-
-// --- Subcomponente del Temporizador ---
+// ─── Static Cooking Timer ────────────────────────────────────────────────────
 function CookingTimer({ defaultMinutes }: { defaultMinutes: number }) {
-  const [totalSeconds, setTotalSeconds] = useState(defaultMinutes * 60);
-  const [isRunning, setIsRunning] = useState(false);
-  const [customMinutes, setCustomMinutes] = useState(defaultMinutes);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        setTotalSeconds((prev) => {
-          if (prev <= 0) {
-            setIsRunning(false);
-            clearInterval(intervalRef.current!);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isRunning]);
-
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const progress = totalSeconds / (customMinutes * 60);
-  const circumference = 2 * Math.PI * 54;
-
-  const reset = () => { setIsRunning(false); setTotalSeconds(customMinutes * 60); };
-  const adjustTime = (delta: number) => {
-    const newMins = Math.max(1, customMinutes + delta);
-    setCustomMinutes(newMins);
-    setTotalSeconds(newMins * 60);
-    setIsRunning(false);
-  };
+  const circumference = 2 * Math.PI * 48;
+  const progress = 1;
 
   return (
-    <div className="rounded-3xl p-6 bg-[#335C67] shadow-lg">
-      <div className="flex items-center gap-2 mb-6">
-        <Timer size={20} color="#E09F3E" />
-        <span className="text-[#FFF3B0] font-bold text-sm tracking-wider">TEMPORIZADOR</span>
+    <div className="rounded-3xl p-5" style={{ backgroundColor: "#335C67" }}>
+      <div className="flex items-center gap-2 mb-4">
+        <Timer size={15} color="#E09F3E" />
+        <span style={{ color: "#FFF3B0", fontWeight: 700, fontSize: 12, letterSpacing: "0.06em" }}>TIEMPO ESTIMADO</span>
       </div>
-      
-      {/* Círculo Animado */}
-      <div className="flex flex-col items-center mb-6">
-        <div className="relative w-[140px] h-[140px]">
-          <svg width="140" height="140" viewBox="0 0 140 140">
-            <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,243,176,0.1)" strokeWidth="8" />
-            <circle cx="70" cy="70" r="54" fill="none" stroke={totalSeconds === 0 ? "#9E2A2B" : "#E09F3E"} strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={circumference * (1 - progress)} transform="rotate(-90 70 70)" className="transition-all duration-1000 ease-linear" />
+      <div className="flex justify-center mb-4">
+        <div style={{ position: "relative", width: 120, height: 120 }}>
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,243,176,0.1)" strokeWidth="7" />
+            <circle cx="60" cy="60" r="48" fill="none" stroke="#E09F3E" strokeWidth="7" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={0} transform="rotate(-90 60 60)" />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center font-mono text-3xl font-bold text-[#FFF3B0]">
-            {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 26, fontWeight: 500, color: "#FFF3B0", lineHeight: 1 }}>
+              {String(defaultMinutes).padStart(2, "0")}:00
+            </span>
           </div>
         </div>
       </div>
-
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <button onClick={() => adjustTime(-1)} className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"><Minus size={16} /></button>
-        <span className="text-white/80 font-medium">{customMinutes} min</span>
-        <button onClick={() => adjustTime(1)} className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20"><Plus size={16} /></button>
-      </div>
-
-      <div className="flex gap-3">
-        <button onClick={() => setIsRunning(!isRunning)} className={`flex-1 py-3 rounded-2xl font-bold text-white flex items-center justify-center gap-2 transition-colors ${isRunning ? 'bg-[#E09F3E] hover:bg-[#c98a30]' : 'bg-[#9E2A2B] hover:bg-[#7d2122]'}`}>
-          {isRunning ? <><Pause size={20} /> Pausar</> : <><Play size={20} /> Iniciar</>}
-        </button>
-        <button onClick={reset} className="p-3 rounded-2xl bg-white/10 text-white hover:bg-white/20"><RotateCcw size={20} /></button>
+      <div className="text-center py-2.5 rounded-2xl" style={{ backgroundColor: "rgba(255,243,176,0.1)", color: "#FFF3B0", fontWeight: 600, fontSize: 13 }}>
+        Modo Cocinar próximamente...
       </div>
     </div>
   );
 }
 
-// --- Vista Principal ---
-export default function RecipeView() {
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [selectedRecipe, setSelectedRecipe] = useState(recipes[0]);
-  const [activeStep, setActiveStep] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+// ─── Advanced Filters Drawer ──────────────────────────────────────────────────
+function FiltersDrawer({ open, onClose, selected, onToggle, onClear }: { open: boolean; onClose: () => void; selected: Record<string, string[]>; onToggle: (cat: string, val: string) => void; onClear: () => void; }) {
+  const [expanded, setExpanded] = useState<string[]>([filterCategories[0].id]);
+  const toggleAccordion = (id: string) => setExpanded((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const totalSelected = Object.values(selected).flat().length;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 pb-10">
-      
-      {/* Columna Izquierda: Lista de Recetas */}
-      <div className="w-full lg:w-1/3 flex flex-col gap-6">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-[#335C67] mb-4">Descubre Recetas</h1>
-          <div className="flex flex-wrap gap-2">
-            {filters.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setActiveFilter(f.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${activeFilter === f.value ? 'bg-[#9E2A2B] text-white' : 'bg-white text-[#335C67] border border-[#335C67]/20 hover:bg-gray-50'}`}
-              >
-                {f.label}
+    <>
+      <div className="fixed inset-0 z-40 transition-opacity" style={{ backgroundColor: "rgba(51,92,103,0.45)", backdropFilter: "blur(4px)", opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }} onClick={onClose} />
+      <div className="fixed top-0 right-0 bottom-0 z-50 flex flex-col" style={{ width: 400, maxWidth: "90vw", backgroundColor: "#fff", transform: open ? "translateX(0)" : "translateX(100%)", transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)", boxShadow: "-12px 0 48px rgba(51,92,103,0.18)" }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div>
+            <h3 style={{ fontFamily: "'Playfair Display', serif", color: "#335C67", fontWeight: 800, fontSize: 20 }}>Filtros Avanzados</h3>
+            {totalSelected > 0 && <span style={{ fontSize: 13, color: "#9E2A2B", fontWeight: 600 }}>{totalSelected} activo{totalSelected !== 1 ? "s" : ""}</span>}
+          </div>
+          <div className="flex items-center gap-3">
+            {totalSelected > 0 && (
+              <button onClick={onClear} style={{ fontSize: 13, color: "#9E2A2B", fontWeight: 600 }}>
+                Limpiar todo
               </button>
-            ))}
+            )}
+            <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 hover:bg-gray-200 transition-colors"><X size={18} color="#335C67" /></button>
           </div>
         </div>
-
-        <div className="flex flex-col gap-4 overflow-y-auto lg:max-h-[calc(100vh-200px)] pr-2">
-          {recipes.map((recipe) => (
-            <button
-              key={recipe.id}
-              onClick={() => { setSelectedRecipe(recipe); setActiveStep(0); setCompletedSteps([]); }}
-              className={`text-left rounded-2xl overflow-hidden border-2 transition-all ${recipe.id === selectedRecipe.id ? 'border-[#9E2A2B] shadow-md bg-white' : 'border-transparent bg-white/60 hover:bg-white hover:border-[#335C67]/20'}`}
-            >
-              <img src={recipe.image} alt={recipe.name} className="w-full h-32 object-cover" />
-              <div className="p-4">
-                <h3 className="font-bold text-[#335C67] mb-2">{recipe.name}</h3>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="flex items-center gap-1 text-[#5a8a96]"><Clock size={14} /> {recipe.time}m</span>
-                  <span className="flex items-center gap-1 text-[#E09F3E] font-bold"><Star size={14} fill="#E09F3E" /> {recipe.rating}</span>
-                </div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
+          {filterCategories.map((cat) => {
+            const isOpen = expanded.includes(cat.id);
+            const activeCount = selected[cat.id]?.length || 0;
+            return (
+              <div key={cat.id} className="rounded-2xl overflow-hidden border border-gray-100">
+                <button onClick={() => toggleAccordion(cat.id)} className="w-full flex items-center justify-between px-4 py-3.5 transition-colors" style={{ backgroundColor: isOpen ? "rgba(51,92,103,0.04)" : "#fff" }}>
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontWeight: 700, color: "#335C67", fontSize: 14 }}>{cat.label}</span>
+                    {activeCount > 0 && <span className="w-5 h-5 rounded-full flex items-center justify-center bg-[#9E2A2B] text-white text-xs font-bold">{activeCount}</span>}
+                  </div>
+                  {isOpen ? <ChevronUp size={16} color="#5a8a96" /> : <ChevronDown size={16} color="#5a8a96" />}
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 flex flex-wrap gap-2">
+                    {cat.options.map((opt) => {
+                      const active = selected[cat.id]?.includes(opt);
+                      return (
+                        <button key={opt} onClick={() => onToggle(cat.id, opt)} className="px-3 py-1.5 rounded-full text-sm transition-all" style={{ backgroundColor: active ? "#335C67" : "rgba(51,92,103,0.06)", color: active ? "#fff" : "#335C67", fontWeight: active ? 700 : 500, border: active ? "none" : "1px solid rgba(51,92,103,0.12)" }}>{opt}</button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+            );
+          })}
+        </div>
+        <div className="px-6 py-5 border-t border-gray-100">
+          <button onClick={onClose} className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold text-sm transition-colors shadow-md"><CheckCircle2 size={17} /> Aplicar Filtros</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function RecipeView() {
+  const supabase = createClient();
+
+  const [recipes, setRecipes] = useState<any[]>([]);
+  const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
+  
+  const [servings, setServings] = useState(4);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<Record<string, string[]>>({});
+  const [generating, setGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const totalFilters = Object.values(selectedFilters).flat().length;
+
+  useEffect(() => { loadHistory(true); }, []);
+
+  const loadHistory = async (showLoader = false) => {
+    if(showLoader) setIsLoading(true);
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from('saved_recipes').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        
+        if (data && data.length > 0) {
+        const parsedRecipes = data.map(r => ({ db_id: r.id, is_favorite: r.is_favorite, ...r.recipe_data }));
+        setRecipes(parsedRecipes);
+        setRecipes(currentRecipes => {
+            if(!selectedRecipe && parsedRecipes.length > 0) setSelectedRecipe(parsedRecipes[0]);
+            return parsedRecipes;
+        });
+        }
+    } catch (error) {
+        console.error("Error cargando recetas:", error);
+    } finally {
+        if(showLoader) setIsLoading(false);
+    }
+  };
+
+  const toggleFilter = (cat: string, val: string) => {
+    setSelectedFilters((prev) => {
+      const current = prev[cat] || [];
+      return { ...prev, [cat]: current.includes(val) ? current.filter((x) => x !== val) : [...current, val] };
+    });
+  };
+
+  const clearFilters = () => setSelectedFilters({});
+
+  const startCamera = async () => {
+    setIsCameraOpen(true);
+    setCapturedImage(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch (err) {
+      alert("No se pudo acceder a la cámara.");
+      setIsCameraOpen(false);
+    }
+  };
+
+  const takePhoto = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0);
+    const imageBase64 = canvas.toDataURL("image/jpeg");
+    setCapturedImage(imageBase64);
+    
+    const stream = videoRef.current.srcObject as MediaStream;
+    stream?.getTracks().forEach(track => track.stop());
+    setIsCameraOpen(false);
+  };
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      const { data: items } = await supabase.from('pantry_items').select('*').eq('user_id', user.id);
+      
+      const pantryInfo = items?.map(i => ({
+        ingredient_name: i.ingredient_name, quantity: i.quantity, unit: i.unit
+      })) || [];
+
+      const flatFilters = Object.values(selectedFilters).flat();
+
+      const response = await fetch('/api/generate-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profile: profile || { allergies: [], dietary_preferences: [], cooking_tools: [] },
+          pantry: pantryInfo,
+          filters: flatFilters,
+          servings: servings,
+          imageBase64: capturedImage
+        })
+      });
+
+      const newRecipes = await response.json();
+      if (newRecipes.error) throw new Error(newRecipes.error);
+
+      for (const rec of newRecipes) {
+        await supabase.from('saved_recipes').insert({
+          user_id: user.id,
+          title: rec.name,
+          recipe_api_id: Math.random().toString(36).substr(2, 9), 
+          recipe_data: rec,
+          is_favorite: false
+        });
+      }
+
+      setCapturedImage(null);
+      await loadHistory(false);
+      
+      const { data: newHistory } = await supabase.from('saved_recipes').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      if(newHistory && newHistory.length > 0) {
+        setSelectedRecipe({ db_id: newHistory[0].id, is_favorite: newHistory[0].is_favorite, ...newHistory[0].recipe_data });
+      }
+
+    } catch (error: any) {
+      console.error(error);
+      alert("Error al generar recetas. Revisa tu conexión o intenta con menos filtros.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const toggleFavorite = async (recipe: any) => {
+    const newStatus = !recipe.is_favorite;
+    await supabase.from('saved_recipes').update({ is_favorite: newStatus }).eq('id', recipe.db_id);
+    
+    if(selectedRecipe && selectedRecipe.db_id === recipe.db_id) {
+       setSelectedRecipe({...selectedRecipe, is_favorite: newStatus});
+    }
+    await loadHistory(false); 
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-[80vh] flex flex-col items-center justify-center bg-[#FFFAE6]">
+        <Loader2 className="animate-spin text-[#E09F3E] mb-4" size={48} />
+        <h2 className="text-xl font-serif font-bold text-[#335C67] animate-pulse">Pensando en recetas...</h2>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col lg:flex-row gap-8 pb-10 font-sans min-h-screen bg-[#FFFAE6]">
+      
+      {/* ── COLUMNA IZQUIERDA (CONTROLES Y LISTA) ── */}
+      <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col gap-6 lg:h-[calc(100vh-6rem)] lg:sticky lg:top-8 overflow-y-auto overflow-x-hidden scrollbar-hide">
+        
+        {/* PANEL GENERADOR */}
+        <div className="bg-white p-6 rounded-3xl border border-[#335C67]/10 shadow-sm">
+          <h2 style={{ fontFamily: "'Playfair Display', serif", color: "#335C67", fontWeight: 800, fontSize: 24 }} className="mb-1 flex items-center gap-2">
+            <Sparkles className="text-[#E09F3E]" size={24} /> IA Chef
+          </h2>
+          <p className="text-[#5a8a96] text-sm mb-6">Genera recetas basadas en tu alacena</p>
+
+          <div className="p-4 rounded-2xl mb-4 bg-[#FFFAE6] border border-[#335C67]/10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5 font-bold text-[#335C67] text-sm"><Users size={16} /> Porciones</div>
+              <span className="px-3 py-1 rounded-full bg-[#335C67] text-[#FFF3B0] font-mono font-bold">{servings}</span>
+            </div>
+            <input type="range" min={1} max={10} value={servings} onChange={(e) => setServings(Number(e.target.value))} className="w-full accent-[#9E2A2B] h-1" />
+            <div className="flex justify-between text-xs text-gray-400 mt-2"><span>1 pax</span><span>10 pax</span></div>
+          </div>
+
+          <button
+            onClick={() => setDrawerOpen(true)}
+            className="flex items-center justify-between w-full px-4 py-3.5 rounded-2xl bg-white border border-[#335C67]/20 hover:bg-gray-50 transition-colors mb-4"
+          >
+            <div className="flex items-center gap-2 font-bold text-[#335C67] text-sm"><SlidersHorizontal size={16} /> Filtros Avanzados</div>
+            <div className="flex items-center gap-2">
+              {totalFilters > 0 && <span className="w-5 h-5 rounded-full flex items-center justify-center bg-[#9E2A2B] text-white text-xs font-bold">{totalFilters}</span>}
+              <ChevronDown size={16} className="text-[#5a8a96]" />
+            </div>
+          </button>
+
+          {/* CHIPS DE FILTROS ACTIVOS CON BOTÓN PARA BORRAR */}
+          {totalFilters > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {Object.entries(selectedFilters).flatMap(([cat, vals]) =>
+                vals.map((v) => (
+                  <span key={`${cat}-${v}`} className="flex items-center gap-1 px-3 py-1 rounded-full text-xs bg-[#335C67] text-white font-bold shadow-sm">
+                    {v} <button onClick={() => toggleFilter(cat, v)}><X size={12} className="opacity-70 hover:opacity-100" /></button>
+                  </span>
+                ))
+              )}
+              <button 
+                onClick={clearFilters} 
+                className="text-xs font-bold text-[#9E2A2B] underline hover:text-[#7d2122] transition-colors ml-1"
+              >
+                Limpiar todo
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button onClick={startCamera} className="p-3.5 rounded-2xl bg-gray-100 text-[#335C67] hover:bg-gray-200 transition-colors shadow-sm"><Camera size={22} /></button>
+            <button onClick={handleGenerate} disabled={generating} className="flex-1 py-3.5 rounded-2xl bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-50">
+              {generating ? <><Loader2 className="animate-spin" size={20} /> Pensando recetas...</> : "Generar Recetas"}
             </button>
+          </div>
+
+          {capturedImage && (
+             <div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#E09F3E] bg-[#FFFAE6] p-3 rounded-xl border border-[#E09F3E]/20">
+               <CheckCircle2 size={16}/> Foto lista. La IA analizará los ingredientes visuales.
+             </div>
+          )}
+        </div>
+
+        {/* HISTORIAL */}
+        <h3 className="font-bold text-[#335C67] mt-2 flex items-center gap-2"><History size={16}/> Historial de IA</h3>
+        
+        {/* CONTENEDOR DE LISTA CON PADDING PARA EVITAR CORTES DE BORDE */}
+        <div className="flex flex-col gap-4 px-2 py-1 pb-4">
+          {recipes.length === 0 && <p className="text-sm text-gray-500 bg-white p-4 rounded-xl text-center shadow-sm border border-gray-100">No hay recetas generadas aún.</p>}
+          {recipes.map((recipe, idx) => (
+            <div key={idx} className="relative group">
+              <button
+                onClick={() => setSelectedRecipe(recipe)}
+                className={`w-full flex items-center gap-3 p-3 rounded-2xl text-left transition-all border-2 ${recipe.db_id === selectedRecipe?.db_id ? 'border-[#E09F3E] shadow-md bg-white scale-[1.02]' : 'border-transparent bg-white hover:border-[#335C67]/20 hover:shadow-sm'}`}
+              >
+                <div className="w-16 h-16 rounded-xl overflow-hidden relative shrink-0">
+                  <img src="/img/mosaicos.png" alt="Mosaicos" className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                  <img src={recipe.image} alt={recipe.name} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay" />
+                </div>
+                <div className="flex-1 min-w-0 pr-10">
+                  <div className="font-bold text-[#335C67] text-[15px] leading-tight mb-1 truncate w-full">{recipe.name}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="flex items-center gap-1 text-[#5a8a96] text-xs"><Clock size={12} />{recipe.time}m</span>
+                    <span className="flex items-center gap-1 text-[#E09F3E] text-xs font-bold"><Users size={12} />{recipe.servings} px</span>
+                  </div>
+                </div>
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); toggleFavorite(recipe); }} className="absolute top-1/2 -translate-y-1/2 right-4 p-2 rounded-full bg-white/90 hover:bg-gray-100 shadow-sm border border-gray-100 transition-all z-10 hover:scale-110">
+                <Heart size={18} fill={recipe.is_favorite ? "#9E2A2B" : "transparent"} color={recipe.is_favorite ? "#9E2A2B" : "#5a8a96"} />
+              </button>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Columna Derecha: Detalle de la Receta */}
-      <div className="w-full lg:w-2/3 bg-white rounded-3xl overflow-hidden shadow-sm border border-[#335C67]/10">
-        <div className="relative h-64 lg:h-80 w-full">
-          <img src={selectedRecipe.image} alt={selectedRecipe.name} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-8">
-            <h2 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-4">{selectedRecipe.name}</h2>
-            <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm font-medium">
-              <span className="flex items-center gap-2"><Clock size={16} /> {selectedRecipe.time} min</span>
-              <span className="flex items-center gap-2"><Users size={16} /> {selectedRecipe.servings} porciones</span>
-            </div>
-          </div>
-        </div>
+      {/* ── COLUMNA DERECHA (VISTA DE RECETA EXPANDIDA) ── */}
+      <div className="flex-1 flex flex-col lg:h-[calc(100vh-6rem)] lg:sticky lg:top-8">
+        {selectedRecipe ? (
+          <div className="bg-white rounded-3xl overflow-y-auto overflow-x-hidden shadow-sm border border-[#335C67]/10 h-full flex flex-col relative">
+            <div className="relative h-80 w-full flex-shrink-0 group overflow-hidden">
+              <img src="/img/mosaicos.png" alt="Patrón decorativo" className="absolute inset-0 w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105" />
+              <img src={selectedRecipe.image} alt={selectedRecipe.name} className="absolute inset-0 w-full h-full object-cover mix-blend-overlay" />
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1a2e33] via-[#1a2e33]/60 to-transparent flex flex-col justify-end p-8 lg:p-12">
+                
+                {/* Botón de Favorito Grande */}
+                <button 
+                  onClick={() => toggleFavorite(selectedRecipe)} 
+                  className="absolute top-6 right-6 p-3 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md transition-all z-10"
+                >
+                  <Heart size={24} fill={selectedRecipe.is_favorite ? "#9E2A2B" : "transparent"} color={selectedRecipe.is_favorite ? "#9E2A2B" : "#fff"} />
+                </button>
 
-        <div className="p-8 grid lg:grid-cols-5 gap-8">
-          
-          {/* Instrucciones */}
-          <div className="lg:col-span-3">
-            <p className="text-[#5a8a96] leading-relaxed mb-8">{selectedRecipe.description}</p>
-            
-            <h3 className="font-serif text-2xl font-bold text-[#335C67] mb-6">Preparación</h3>
-            <div className="space-y-4">
-              {selectedRecipe.steps.map((step, idx) => {
-                const isDone = completedSteps.includes(idx);
-                const isActive = idx === activeStep && !isDone;
-                return (
-                  <div 
-                    key={step.step} 
-                    onClick={() => { setActiveStep(idx); setCompletedSteps(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]); }}
-                    className={`flex gap-4 p-4 rounded-2xl cursor-pointer transition-all border-2 ${isDone ? 'bg-gray-50 border-transparent opacity-60' : isActive ? 'bg-[#FFFAE6] border-[#E09F3E]' : 'bg-white border-gray-100 hover:border-[#E09F3E]/50'}`}
-                  >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${isDone ? 'bg-[#335C67] text-white' : isActive ? 'bg-[#9E2A2B] text-white' : 'bg-gray-200 text-[#335C67]'}`}>
-                      {isDone ? <CheckCircle2 size={16} /> : step.step}
-                    </div>
-                    <p className={`text-sm ${isDone ? 'line-through text-gray-500' : 'text-[#335C67]'}`}>{step.instruction}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Temporizador y Tips */}
-          <div className="lg:col-span-2 space-y-6">
-            <CookingTimer defaultMinutes={selectedRecipe.steps[Math.min(activeStep, selectedRecipe.steps.length - 1)]?.time || 5} />
-            
-            <div className="bg-[#FFFAE6] rounded-3xl p-6 border border-[#E09F3E]/20">
-              <div className="flex items-center gap-2 mb-3 text-[#E09F3E] font-bold">
-                <AlertCircle size={20} /> Tip del Chef
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedRecipe.tags?.map((tag: string) => (
+                    <span key={tag} className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#E09F3E]/90 text-white backdrop-blur-md shadow-sm">{tag}</span>
+                  ))}
+                </div>
+                <h2 className="text-3xl lg:text-4xl font-serif font-bold text-white mb-4 shadow-sm">{selectedRecipe.name}</h2>
+                <div className="flex items-center gap-4 text-white text-sm font-medium">
+                  <span className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg"><Clock size={16} color="#E09F3E"/> {selectedRecipe.time} min</span>
+                  <span className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg"><Users size={16} color="#E09F3E"/> {selectedRecipe.servings} porciones</span>
+                </div>
               </div>
-              <p className="text-sm text-[#5a8a96] leading-relaxed">Prueba la comida mientras cocinas. Ajustar la sal al final hace una gran diferencia.</p>
+            </div>
+
+            <div className="p-8 lg:p-12 grid xl:grid-cols-3 gap-10 flex-1">
+              <div className="xl:col-span-2">
+                <p className="text-[#5a8a96] leading-relaxed mb-10 text-lg font-medium">{selectedRecipe.description}</p>
+                
+                <div className="mb-10 p-8 bg-[#FFFAE6] rounded-3xl border border-[#E09F3E]/20 shadow-inner">
+                  <h3 className="font-serif text-xl font-bold text-[#335C67] mb-4">Ingredientes ({selectedRecipe.servings} pax)</h3>
+                  <h4 className="text-sm font-bold text-[#335C67] mb-2 uppercase opacity-70">En tu Alacena:</h4>
+                  <ul className="space-y-3 mb-6">
+                    {selectedRecipe.ownedIngredients?.map((ing: any, i:number) => (
+                      <li key={i} className="flex items-start gap-2 text-[#335C67] font-medium"><CheckCircle2 size={18} color="#E09F3E" className="mt-0.5 shrink-0"/> {ing.qty} {ing.unit} {ing.name}</li>
+                    ))}
+                  </ul>
+
+                  {selectedRecipe.missingIngredients?.length > 0 && (
+                    <>
+                      <h4 className="text-sm font-bold text-[#9E2A2B] mb-2 uppercase flex items-center gap-1 opacity-90"><AlertCircle size={14}/> Faltantes (Sugeridos):</h4>
+                      <ul className="space-y-3">
+                        {selectedRecipe.missingIngredients.map((ing: any, i:number) => (
+                          <li key={i} className="flex items-start gap-2 text-[#9E2A2B] font-medium"><ShoppingCart size={18} className="mt-0.5 shrink-0 opacity-70"/> {ing.qty} {ing.unit} {ing.name}</li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+                
+                <h3 className="font-serif text-2xl font-bold text-[#335C67] mb-6">Instrucciones</h3>
+                <div className="space-y-4">
+                  {selectedRecipe.steps?.map((step: any, idx: number) => {
+                    return (
+                      <div key={step.step || idx} className="flex gap-4 p-5 rounded-2xl bg-white border border-gray-100 shadow-sm transition-all hover:border-[#E09F3E]/40">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-[#335C67] text-white">
+                          {step.step || (idx + 1)}
+                        </div>
+                        <div>
+                          <h4 className="font-bold mb-1.5 text-[#335C67]">{step.title || `Paso ${step.step || idx + 1}`}</h4>
+                          <p className="text-sm leading-relaxed text-[#5a8a96]">{step.instruction}</p>
+                          <span className="inline-flex items-center gap-1 mt-2 text-xs text-[#E09F3E] font-bold">
+                            <Clock size={12} /> {step.time} min
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <CookingTimer defaultMinutes={selectedRecipe.time || 30} />
+
+                <div className="bg-white rounded-3xl p-6 border border-[#335C67]/10 shadow-sm text-center">
+                   <h3 className="font-bold text-[#335C67] mb-4 text-lg">¿Todo listo?</h3>
+                   <button className="w-full py-4 rounded-2xl bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold flex items-center justify-center gap-2 transition-all shadow-md">
+                     <Flame size={20} /> ¡A Cocinar!
+                   </button>
+                </div>
+
+                <div className="bg-white rounded-3xl p-6 border border-[#335C67]/10 shadow-sm">
+                  <h3 className="font-bold text-[#335C67] mb-5 flex items-center gap-2"><Sparkles size={18} color="#E09F3E"/> Info Nutricional</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="bg-gray-50 p-4 rounded-2xl text-center border border-gray-100">
+                      <div className="text-[#5a8a96] mb-1 font-medium">Calorías</div>
+                      <div className="font-bold text-[#9E2A2B] text-xl">{selectedRecipe.nutrition?.calorias || 0}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-2xl text-center border border-gray-100">
+                      <div className="text-[#5a8a96] mb-1 font-medium">Proteína</div>
+                      <div className="font-bold text-[#335C67] text-xl">{selectedRecipe.nutrition?.proteina || "0g"}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-2xl text-center border border-gray-100">
+                      <div className="text-[#5a8a96] mb-1 font-medium">Carbs</div>
+                      <div className="font-bold text-[#E09F3E] text-xl">{selectedRecipe.nutrition?.carbohidratos || "0g"}</div>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-2xl text-center border border-gray-100">
+                      <div className="text-[#5a8a96] mb-1 font-medium">Grasas</div>
+                      <div className="font-bold text-[#5a8a96] text-xl">{selectedRecipe.nutrition?.grasas || "0g"}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-        </div>
+        ) : (
+          <div className="w-full h-full bg-white/50 rounded-3xl border-2 border-dashed border-[#335C67]/20 flex flex-col items-center justify-center p-12 text-center shadow-sm">
+            <ChefHat size={64} className="text-[#335C67]/20 mb-4" />
+            <h2 className="text-2xl font-serif font-bold text-[#335C67] mb-2">Tu cocina está lista</h2>
+            <p className="text-[#5a8a96] max-w-md">Abre el menú de "Filtros Avanzados", selecciona tus preferencias y deja que la IA genere magia con tu alacena.</p>
+          </div>
+        )}
       </div>
+
+      <FiltersDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} selected={selectedFilters} onToggle={toggleFilter} onClear={clearFilters} />
+      
+      {isCameraOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
+          <video ref={videoRef} autoPlay playsInline className="w-full max-w-md rounded-2xl bg-black mb-4 border border-white/20" />
+          <div className="flex gap-4">
+            <button onClick={() => { setIsCameraOpen(false); videoRef.current?.srcObject?.getTracks().forEach((t:any) => t.stop()); }} className="px-6 py-3 rounded-full bg-white/20 text-white font-bold hover:bg-white/30">Cancelar</button>
+            <button onClick={takePhoto} className="px-6 py-3 rounded-full bg-[#E09F3E] text-white font-bold flex items-center gap-2 hover:bg-[#c98a30]"><Camera size={20} /> Tomar Foto</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

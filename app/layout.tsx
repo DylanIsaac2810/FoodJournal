@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito, Playfair_Display, DM_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// ─── CONFIGURACIÓN DE FUENTES GOOGLE ──────────────────────────────────────
+const nunito = Nunito({
   subsets: ["latin"],
+  variable: "--font-nunito",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const playfair = Playfair_Display({
   subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
 });
 
-// 1. Actualicé el título y la descripción para tu proyecto
+const dmMono = DM_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-dm-mono",
+  display: "swap",
+});
+
+// ─── METADATOS DEL PROYECTO ───────────────────────────────────────────────
 export const metadata: Metadata = {
   title: "Food Journey | Anyone Can Cook!",
   description: "Plataforma inteligente de gestión de alacena y recomendación de recetas para reducir el desperdicio de comida.",
+  icons: {
+    icon: '/img/logo.png', // Esto pondrá tu logo en la pestaña del navegador
+  }
 };
 
 export default function RootLayout({
@@ -26,9 +39,11 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
+      className={`${nunito.variable} ${playfair.variable} ${dmMono.variable} h-full antialiased scroll-smooth`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-[#FFFAE6] text-[#335C67]">
+        {children}
+      </body>
     </html>
   );
 }

@@ -22,22 +22,29 @@ El proyecto sigue la estructura recomendada del App Router de Next.js, separando
 food-journal/
 ├── app/                        # Rutas de la aplicación (Next.js App Router)
 │   ├── api/classify/route.ts   # Endpoint de Backend para IA (Gemini)
+│   │   ├── cassify             # Clasificador inteligente de ingredientes
+│   │   └── generate-recipes    # Generador inteligente de recetas
+│   |
 │   ├── auth/callback/route.ts  # Manejador del login con Supabase
 │   ├── dashboard/              # Vistas protegidas del usuario
 │   │   ├── layout.tsx          # Menú lateral (Sidebar) retráctil
 │   │   └── pantry/page.tsx     # Vista principal de la Alacena Digital
+|   ├──components/              # Componentes UI reutilizables
+│   │     ├── auth/             # Modales de Login/Registro y formulario de preferencias
+│   │     ├── layout/           # Navbar y Footer públicos
+│   │     ├── cook/             # Modales de cook
+│   │     ├── recipes/          # Modales de recipes
+│   │     ├── ui/               # Elementos UI reciclables
+│   │     └── pantry/           # Tarjetas de ingredientes y Notificaciones
+|   |
 │   └── page.tsx                # Landing Page pública
-├── components/                 # Componentes UI reutilizables
-│   ├── auth/                   # Modales de Login/Registro
-│   ├── layout/                 # Navbar y Footer públicos
-│   └── pantry/                 # Tarjetas de ingredientes y Notificaciones
 ├── utils/
 │   └── supabase/               # Configuración de Supabase
+│       ├── middleware.ts       # Protege rutas de la aplicacion
 │       ├── client.ts           # Cliente para componentes de React
 │       └── server.ts           # Cliente para Server Components/APIs
 ├── public/                     # Imágenes, iconos estáticos
 ├── .env.local                  # Variables de entorno (¡NO SUBIR A GITHUB!)
-├── tailwind.config.ts          # Configuración de estilos
 └── package.json                # Dependencias del proyecto
 
 ## Clonar repositorio

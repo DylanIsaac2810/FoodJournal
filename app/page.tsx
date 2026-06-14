@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Leaf, Clock, Sparkles, ArrowRight, Recycle, Heart } from "lucide-react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
-import { StepCard } from "@/components/ui/StepCard";
-import { LoginModal } from "@/components/auth/LoginModal";
+import { Navbar } from "@/app/components/layout/Navbar";
+import { Footer } from "@/app/components/layout/Footer";
+import { StepCard } from "@/app/components/ui/StepCard";
+import { LoginModal } from "@/app/components/auth/LoginModal";
 
 export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);

@@ -23,6 +23,8 @@ export async function POST(request: Request) {
       2. "icon": Un solo emoji que represente mejor al ingrediente.
       3. "daysToExpire": Un número entero que represente la cantidad aproximada de días que este ingrediente dura fresco si se almacena correctamente.
       4. "location": El mejor lugar para guardarlo. Solo puede ser una de estas tres opciones: "Refrigerador", "Alacena", "Congelador".
+      5. "correctedName": Corrige la ortografía y pon la primera letra en mayúscula (ej. "sal de himalahia" -> "Sal del Himalaya"). 
+         ¡MUY IMPORTANTE!: Si el ingrediente significa lo mismo o es un sinónimo de alguno que el usuario YA TIENE en su alacena, DEBES devolver EXACTAMENTE el nombre como aparece en la alacena del usuario para evitar duplicados.
 
       Ejemplo de respuesta si te digo "Cebolla morada":
       {
