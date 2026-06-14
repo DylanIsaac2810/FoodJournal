@@ -28,6 +28,8 @@ food-journal/
 │   ├── auth/callback/route.ts  # Manejador del login con Supabase
 │   ├── dashboard/              # Vistas protegidas del usuario
 │   │   ├── layout.tsx          # Menú lateral (Sidebar) retráctil
+│   │   ├── recipes.tsx         # Vista del recetario inteligente
+│   │   ├── cook.tsx            # Vista recetas para cocinar
 │   │   └── pantry/page.tsx     # Vista principal de la Alacena Digital
 |   ├──components/              # Componentes UI reutilizables
 │   │     ├── auth/             # Modales de Login/Registro y formulario de preferencias
