@@ -34,7 +34,7 @@ export function Navbar({ onLoginClick }: NavbarProps) {
         </span>
       </div>
       
-      <div className="hidden md:flex items-center gap-8">
+      <div className="hidden text-xl lg:text-2xl font-bold md:flex items-center gap-20">
         {navItems.map((item) => (
           <Link
             key={item.label}
