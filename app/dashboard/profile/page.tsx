@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { User, Lock, Mail, ChefHat, Heart, ShieldCheck, Loader2, AlertCircle, AlertTriangle, CheckCircle2, Sparkles } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 
-// ─── OPCIONES PREDEFINIDAS ────────────────────────────────────────────────
 const DIET_OPTIONS = ["Balanceado", "Vegetariano", "Vegano", "Keto", "Sin Gluten", "Sin Lácteos", "Pescatariano"];
 const ALLERGY_OPTIONS = ["Ninguna", "Nueces", "Mariscos", "Huevo", "Lácteos", "Soya", "Gluten", "Pescado"];
 const TOOL_OPTIONS = ["Horno", "Microondas", "Licuadora", "Sartén", "Olla de presión", "Air Fryer", "Batidora", "Procesador de alimentos"];
@@ -13,22 +12,18 @@ export default function ProfileDashboard() {
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
 
-  // ─── ESTADOS DEL USUARIO ────────────────────────────────────────────────
   const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState(""); // Usaremos esto para el input, pero lo guardaremos como display_name
+  const [fullName, setFullName] = useState(""); 
   const [dietaryPreferences, setDietaryPreferences] = useState<string[]>([]);
   const [allergies, setAllergies] = useState<string[]>([]);
   const [cookingTools, setCookingTools] = useState<string[]>([]);
 
-  // ─── ESTADOS PARA CONTRASEÑA ────────────────────────────────────────────
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // ─── ESTADOS DE CARGA (BOTONES) ─────────────────────────────────────────
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  // ─── NOTIFICACIONES (TOAST) ─────────────────────────────────────────────
   const [toast, setToast] = useState<{show: boolean, message: string, type: 'success' | 'error' | 'warning'}>({ show: false, message: "", type: "success" });
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
@@ -51,7 +46,6 @@ export default function ProfileDashboard() {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
       if (profile) {
-        // AQUÍ SE CORRIGIÓ: leemos de display_name en lugar de full_name
         setFullName(profile.display_name || "");
         setDietaryPreferences(profile.dietary_preferences || []);
         setAllergies(profile.allergies || []);
@@ -64,7 +58,6 @@ export default function ProfileDashboard() {
     }
   };
 
-  // ─── FUNCIONES PARA MANEJAR ARREGLOS (BURBUJAS) ─────────────────────────
   const toggleSelection = (item: string, list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, exclusiveNone = false) => {
     if (exclusiveNone && item === "Ninguna") {
       setList(["Ninguna"]);
@@ -83,24 +76,21 @@ export default function ProfileDashboard() {
     }
   };
 
-  // ─── GUARDAR PERFIL (ACTUALIZADO A UPSERT) ──────────────────────────────
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no encontrado");
 
-      // Usamos UPSERT en lugar de UPDATE por si la fila no existe aún
       const { error } = await supabase.from('profiles').upsert({
         id: user.id,
-        display_name: fullName, // AQUÍ SE CORRIGIÓ: mapeamos al campo correcto de tu BD
+        display_name: fullName, 
         dietary_preferences: dietaryPreferences,
         allergies: allergies,
         cooking_tools: cookingTools,
       });
 
       if (error) {
-        // Imprimimos el error exacto en la consola para depurar
         console.error("Error de Supabase al guardar:", error.message, error.details);
         throw error;
       }
@@ -114,16 +104,29 @@ export default function ProfileDashboard() {
     }
   };
 
-  // ─── GUARDAR CONTRASEÑA ─────────────────────────────────────────────────
+  // ─── FUNCIÓN DE VALIDACIÓN DE CONTRASEÑA ───
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8 || pwd.length > 64) return "La contraseña debe tener entre 8 y 64 caracteres.";
+    if (!/[A-Z]/.test(pwd)) return "La contraseña debe contener al menos una letra mayúscula.";
+    if (!/[a-z]/.test(pwd)) return "La contraseña debe contener al menos una letra minúscula.";
+    if (!/[0-9]/.test(pwd)) return "La contraseña debe contener al menos un número.";
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) return "La contraseña debe contener al menos un carácter especial.";
+    return null;
+  };
+
   const handleUpdatePassword = async () => {
     if (!newPassword || !confirmPassword) {
       return showToast("Por favor, llena ambos campos de contraseña", "warning");
     }
-    if (newPassword.length < 6) {
-      return showToast("La contraseña debe tener al menos 6 caracteres", "warning");
-    }
+    
     if (newPassword !== confirmPassword) {
       return showToast("Las contraseñas no coinciden", "error");
+    }
+
+    // Validamos la contraseña contra nuestros parámetros estrictos
+    const pwdError = validatePassword(newPassword);
+    if (pwdError) {
+      return showToast(pwdError, "warning");
     }
 
     setIsSavingPassword(true);
@@ -168,15 +171,14 @@ export default function ProfileDashboard() {
         <span className="font-bold text-sm">{toast.message}</span>
       </div>
 
-      {/* ── HEADER MODIFICADO (EL BOTÓN AHORA VIVE AQUÍ) ── */}
       <header className="mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
           <h1 className="font-serif text-4xl font-bold text-[#335C67]">Mi Perfil</h1>
           <p className="text-[#5a8a96] mt-2 text-lg">Administra tu cuenta y tus preferencias culinarias.</p>
         </div>
 
-        {/* BOTÓN DE GUARDAR GLOBAL */}
         <button 
+          id="tour-profile-save"
           onClick={handleSaveProfile}
           disabled={isSavingProfile}
           className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-[#335C67] hover:bg-[#254950] text-white font-bold flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 disabled:opacity-50"
@@ -190,7 +192,6 @@ export default function ProfileDashboard() {
         {/* ── COLUMNA IZQUIERDA: DATOS PERSONALES Y SEGURIDAD ── */}
         <div className="w-full lg:w-[400px] flex flex-col gap-8 shrink-0">
           
-          {/* Tarjeta de Cuenta */}
           <div className="bg-white rounded-3xl p-8 border border-[#335C67]/10 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 -mr-6 -mt-6 opacity-5"><User size={150} color="#335C67"/></div>
             
@@ -219,7 +220,6 @@ export default function ProfileDashboard() {
             </div>
           </div>
 
-          {/* Tarjeta de Seguridad (Contraseña) */}
           <div className="bg-white rounded-3xl p-8 border border-[#335C67]/10 shadow-sm relative overflow-hidden">
             <h2 className="font-serif text-2xl font-bold text-[#335C67] mb-6 flex items-center gap-2">
               <ShieldCheck color="#E09F3E" /> Seguridad
@@ -269,7 +269,7 @@ export default function ProfileDashboard() {
 
         {/* ── COLUMNA DERECHA: PERFIL CULINARIO (IA) ── */}
         <div className="flex-1 flex flex-col gap-8">
-          <div className="bg-white rounded-3xl p-8 border border-[#335C67]/10 shadow-sm relative overflow-hidden flex-1">
+          <div id="tour-profile-ia" className="bg-white rounded-3xl p-8 border border-[#335C67]/10 shadow-sm relative overflow-hidden flex-1">
             <div className="absolute bottom-0 right-0 -mr-10 -mb-10 opacity-5"><ChefHat size={250} color="#335C67"/></div>
             
             <h2 className="font-serif text-3xl font-bold text-[#335C67] mb-2 flex items-center gap-3 relative z-10">
@@ -362,4 +362,4 @@ export default function ProfileDashboard() {
       </div>
     </div>
   );
-}   
+}

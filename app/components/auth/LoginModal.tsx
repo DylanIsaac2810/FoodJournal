@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Lock, Loader2, X } from 'lucide-react';
+import { Mail, Lock, Loader2, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 interface LoginModalProps {
@@ -14,11 +14,24 @@ export function LoginModal({ onClose }: LoginModalProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Nuevo estado para el mensaje de éxito bonito
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const supabase = createClient();
 
+  // ─── FUNCIÓN DE VALIDACIÓN DE CONTRASEÑA ───
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8 || pwd.length > 64) return "La contraseña debe tener entre 8 y 64 caracteres.";
+    if (!/[A-Z]/.test(pwd)) return "La contraseña debe contener al menos una letra mayúscula.";
+    if (!/[a-z]/.test(pwd)) return "La contraseña debe contener al menos una letra minúscula.";
+    if (!/[0-9]/.test(pwd)) return "La contraseña debe contener al menos un número.";
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) return "La contraseña debe contener al menos un carácter especial.";
+    return null;
+  };
+
   const handleGoogleLogin = async () => {
     setError(null);
+    setSuccessMessage(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -32,16 +45,34 @@ export function LoginModal({ onClose }: LoginModalProps) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
       if (isRegistering) {
+        // Ejecutamos la validación antes de llamar a Supabase
+        const pwdError = validatePassword(password);
+        if (pwdError) {
+          setError(pwdError);
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         });
+        
         if (error) throw error;
-        alert('Revisa tu correo para confirmar tu cuenta.');
+        
+        // AQUÍ REEMPLAZAMOS EL ALERT FEO POR EL MENSAJE BONITO
+        setSuccessMessage('¡Cuenta creada! Revisa tu correo electrónico para confirmarla antes de iniciar sesión.');
+        // Limpiamos los campos
+        setEmail('');
+        setPassword('');
+        // Opcional: Podrías cambiarlo a modo "login" para que cuando confirmen ya puedan entrar directo
+        setIsRegistering(false);
+
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -61,7 +92,6 @@ export function LoginModal({ onClose }: LoginModalProps) {
     >
       <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200">
         
-        {/* Botón de Cerrar */}
         <button 
           onClick={onClose}
           className="absolute top-6 right-6 text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"
@@ -78,7 +108,6 @@ export function LoginModal({ onClose }: LoginModalProps) {
           </p>
         </div>
 
-        {/* Botón de Google */}
         <button
           onClick={handleGoogleLogin}
           className="w-full flex items-center justify-center gap-3 px-6 py-3 border border-gray-300 rounded-2xl text-[#335C67] font-bold hover:bg-gray-50 transition-colors shadow-sm mb-6"
@@ -88,7 +117,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
               <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
               <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
               <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-              <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+              <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 43.989 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
             </g>
           </svg>
           Continuar con Google
@@ -100,13 +129,22 @@ export function LoginModal({ onClose }: LoginModalProps) {
           <div className="h-px bg-gray-200 flex-1"></div>
         </div>
 
+        {/* ─── MENSAJE DE ERROR MEJORADO ─── */}
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm text-center">
-            {error}
+          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-[#9E2A2B] text-sm text-left flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
-        {/* Formulario de Email */}
+        {/* ─── MENSAJE DE ÉXITO (Reemplaza al alert) ─── */}
+        {successMessage && (
+          <div className="mb-4 p-4 rounded-xl bg-[#335C67]/10 border border-[#335C67]/20 text-[#335C67] text-sm text-center flex flex-col items-center gap-2 animate-in zoom-in duration-300">
+            <CheckCircle2 size={32} className="text-[#335C67]" />
+            <span className="font-bold text-base">{successMessage}</span>
+          </div>
+        )}
+
         <form onSubmit={handleEmailAuth} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-[#335C67] mb-1.5">Correo Electrónico</label>
@@ -118,7 +156,6 @@ export function LoginModal({ onClose }: LoginModalProps) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                /* Aquí añadimos text-black y placeholder:text-gray-500 */
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#E09F3E] focus:border-[#E09F3E] outline-none transition-all text-sm font-medium text-black placeholder:text-gray-500 placeholder:font-normal"
                 placeholder="chef@ejemplo.com"
                 required
@@ -136,7 +173,6 @@ export function LoginModal({ onClose }: LoginModalProps) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                /* Aquí añadimos text-black y placeholder:text-gray-500 */
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#E09F3E] focus:border-[#E09F3E] outline-none transition-all text-sm font-medium text-black placeholder:text-gray-500 placeholder:font-normal"
                 placeholder="••••••••"
                 required
@@ -157,7 +193,11 @@ export function LoginModal({ onClose }: LoginModalProps) {
         <div className="mt-6 text-center text-sm text-[#5a8a96]">
           {isRegistering ? '¿Ya tienes una cuenta?' : '¿No tienes cuenta aún?'}{' '}
           <button
-            onClick={() => setIsRegistering(!isRegistering)}
+            onClick={() => {
+              setIsRegistering(!isRegistering);
+              setError(null);
+              setSuccessMessage(null);
+            }}
             className="font-bold text-[#335C67] hover:text-[#E09F3E] transition-colors"
           >
             {isRegistering ? 'Inicia sesión' : 'Regístrate gratis'}

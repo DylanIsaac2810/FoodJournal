@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, AlertTriangle } from 'lucide-react';
 
 // ─── OPCIONES SINCRONIZADAS CON EL PERFIL ─────────────────────────────────
 const DIETARY_OPTIONS = [
@@ -44,7 +44,16 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  // ─── ESTADO PARA LA NOTIFICACIÓN TOAST ───
+  const [toast, setToast] = useState<{show: boolean, message: string, type: 'error' | 'warning'}>({ show: false, message: "", type: "error" });
+
   const supabase = createClient();
+
+  // Función para mostrar el toast y ocultarlo automáticamente
+  const showToast = (message: string, type: 'error' | 'warning' = 'error') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3500);
+  };
 
   const toggleSelection = (id: string, list: string[], setList: (v: string[]) => void) => {
     if (id === 'Ninguna') {
@@ -61,7 +70,7 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
   };
 
   const handleSave = async () => {
-    if (!name.trim()) return alert("Por favor ingresa tu nombre.");
+    if (!name.trim()) return showToast("Por favor ingresa tu nombre.", "warning");
     setIsSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -77,9 +86,9 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
       });
 
       if (error) throw error;
-      onComplete(); 
+      onComplete(); // Al terminar cierra el modal
     } catch (err: any) {
-      alert("Error al guardar perfil: " + (err.message));
+      showToast("Error al guardar perfil: " + (err.message), "error");
     } finally {
       setIsSaving(false);
     }
@@ -87,6 +96,20 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 bg-[#335C67]/80 backdrop-blur-sm">
+      
+      {/* ── TOAST NOTIFICATION ── */}
+      <div 
+        className={`fixed top-8 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform ${
+          toast.show ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'
+        } ${
+          toast.type === 'error' ? 'bg-[#9E2A2B] text-white' :
+          'bg-[#FFFAE6] border-2 border-[#E09F3E] text-[#b87d2a]'
+        }`}
+      >
+        {toast.type === 'error' ? <AlertCircle size={22} /> : <AlertTriangle size={22} />}
+        <span className="font-bold text-sm">{toast.message}</span>
+      </div>
+
       <div className="bg-[#FFFAE6] rounded-3xl p-6 w-full max-w-xl shadow-2xl flex flex-col max-h-[95vh]">
         
         {/* Header Fijo */}
