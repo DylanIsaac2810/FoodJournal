@@ -21,15 +21,15 @@ El proyecto sigue la estructura recomendada del App Router de Next.js, separando
 ```text
 food-journal/
 ├── app/                        # Rutas de la aplicación (Next.js App Router)
-│   ├── api/classify/route.ts   # Endpoint de Backend para IA (Gemini)
-│   │   ├── cassify             # Clasificador inteligente de ingredientes
-│   │   └── generate-recipes    # Generador inteligente de recetas
+│   ├── api                     # Endpoint de Backend para IA (Gemini)
+│   │   ├── cassify/            # Clasificador inteligente de ingredientes
+│   │   └── generate-recipes/   # Generador inteligente de recetas
 │   |
 │   ├── auth/callback/route.ts  # Manejador del login con Supabase
 │   ├── dashboard/              # Vistas protegidas del usuario
-│   │   ├── layout.tsx          # Menú lateral (Sidebar) retráctil
-│   │   ├── recipes.tsx         # Vista del recetario inteligente
-│   │   ├── cook.tsx            # Vista recetas para cocinar
+│   │   ├── layout/page.tsx     # Menú lateral (Sidebar) retráctil
+│   │   ├── recipes/page.tsx    # Vista del recetario inteligente
+│   │   ├── cook/page.tsx       # Vista recetas para cocinar
 │   │   └── pantry/page.tsx     # Vista principal de la Alacena Digital
 |   ├──components/              # Componentes UI reutilizables
 │   │     ├── auth/             # Modales de Login/Registro y formulario de preferencias
@@ -50,8 +50,8 @@ food-journal/
 └── package.json                # Dependencias del proyecto
 
 ## Clonar repositorio
-git clone [https://github.com/DylanIsaac2810/FoodJournal.git](https://github.com/DylanIsaac2810/FoodJournal.git)
-cd food-journal
+git clone https://github.com/DylanIsaac2810/FoodJournal.git
+cd FoodJournal
 
 ##Instalar dependencias
 npm install
