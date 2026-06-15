@@ -275,7 +275,7 @@ export default function ProfileDashboard() {
             <h2 className="font-serif text-3xl font-bold text-[#335C67] mb-2 flex items-center gap-3 relative z-10">
               <Sparkles color="#E09F3E" size={28} /> Mi Perfil Culinario (IA)
             </h2>
-            <p className="text-[#5a8a96] mb-10 text-sm font-medium relative z-10">Food Journey utiliza esta información para generar recetas perfectamente adaptadas a ti y a lo que tienes en tu cocina.</p>
+            <p className="text-[#5a8a96] mb-10 text-sm font-medium relative z-10">Food Journal utiliza esta información para generar recetas perfectamente adaptadas a ti y a lo que tienes en tu cocina.</p>
 
             <div className="space-y-10 relative z-10">
               

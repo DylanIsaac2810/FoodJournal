@@ -92,7 +92,7 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
         {/* Header Fijo */}
         <div className="text-center mb-4 flex-shrink-0">
           <h2 className="text-2xl font-bold text-[#335C67]" style={{ fontFamily: "'Playfair Display', serif" }}>
-            ¡Bienvenido a Food Journey!
+            ¡Bienvenido a Food Journal!
           </h2>
           <p className="text-[#5a8a96] text-sm">Personaliza tu experiencia culinaria</p>
         </div>
@@ -115,7 +115,7 @@ export function OnboardingModal({ onComplete }: { onComplete: () => void }) {
           {[
             { title: "Alergias e Intolerancias", list: selectedAllergies, setList: setSelectedAllergies, options: ALLERGY_OPTIONS, isTool: false },
             { title: "Preferencias Dietéticas", list: selectedDiets, setList: setSelectedDiets, options: DIETARY_OPTIONS, isTool: false },
-            { title: "Herramientas de Cocina", list: selectedTools, setList: setSelectedTools, options: TOOLS_OPTIONS, isTool: true },
+            { title: "Herramientas en la Cocina", list: selectedTools, setList: setSelectedTools, options: TOOLS_OPTIONS, isTool: true },
           ].map((section, idx) => (
             <div key={idx}>
               <label className="block text-xs font-bold text-[#335C67] mb-2">{section.title}</label>

@@ -24,7 +24,7 @@ const dmMono = DM_Mono({
 
 // ─── METADATOS DEL PROYECTO ───────────────────────────────────────────────
 export const metadata: Metadata = {
-  title: "Food Journey | Anyone Can Cook!",
+  title: "Food Journal | Anyone Can Cook!",
   description: "Plataforma inteligente de gestión de alacena y recomendación de recetas para reducir el desperdicio de comida.",
   icons: {
     icon: '/img/logo.png', // Esto pondrá tu logo en la pestaña del navegador

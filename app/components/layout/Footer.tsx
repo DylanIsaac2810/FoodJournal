@@ -7,7 +7,7 @@ export function Footer() {
         <div className="flex items-center gap-2">
           <img 
             src="/img/logo.png" 
-            alt="Logo Food Journey" 
+            alt="Logo Food Journal" 
             className="h-14 w-auto drop-shadow-sm"
           />
           <span

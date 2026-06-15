@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from "react";
-import { Clock, Users, Search, AlertCircle, CheckCircle2, History, Heart, Flame, ChefHat, ShoppingCart, Sparkles, Plus, Minus, Loader2 } from "lucide-react";
+import { Clock, Users, Search, AlertCircle, CheckCircle2, History, Heart, Flame, ChefHat, ShoppingCart, Sparkles, Plus, Minus, Loader2, AlertTriangle, X } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 import { InteractiveTimer } from "../../components/cook/InteractiveTimer";
 import { GuidedCookingModal } from "../../components/cook/GuidedCookingModal";
@@ -23,10 +23,18 @@ export default function HistoryView() {
   // ESTADO DE CARGA INICIAL
   const [isLoading, setIsLoading] = useState(true);
 
-  // Cargamos los datos con la pantalla de carga activada al inicio
+  // ─── ESTADOS NUEVOS: TOAST Y MODAL DE FALTANTES ───
+  const [toast, setToast] = useState<{show: boolean, message: string, type: 'success' | 'error' | 'warning'}>({ show: false, message: "", type: "success" });
+  const [showMissingModal, setShowMissingModal] = useState(false);
+  const [isAutocompleting, setIsAutocompleting] = useState(false);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3500);
+  };
+
   useEffect(() => { loadHistory(true); }, []);
 
-  // Le pasamos un parámetro para saber si debe mostrar la pantalla de carga gigante o no
   const loadHistory = async (showLoader = false) => {
     if (showLoader) setIsLoading(true);
     try {
@@ -61,7 +69,7 @@ export default function HistoryView() {
     if(selectedRecipe && selectedRecipe.db_id === recipe.db_id) {
        setSelectedRecipe({...selectedRecipe, is_favorite: newStatus});
     }
-    await loadHistory(false); // Recarga silenciosa
+    await loadHistory(false); 
   };
 
   const toggleStep = (idx: number) => {
@@ -120,6 +128,99 @@ export default function HistoryView() {
 
   const currentStepTime = liveRecipe?.steps?.[Math.min(activeStep, liveRecipe.steps.length - 1)]?.time || 5;
 
+  // ─── LÓGICA DE INTERCEPCIÓN PARA COCINAR ───
+  const handleStartCooking = () => {
+    if (liveRecipe?.missingIngredients?.length > 0) {
+      setShowMissingModal(true);
+    } else {
+      setIsCooking(true);
+    }
+  };
+
+  const handleCancelCooking = () => {
+    setShowMissingModal(false);
+    showToast("Operación cancelada. ¡Consigue los ingredientes primero!", "warning");
+  };
+
+  const handleAutocompleteAndCook = async () => {
+    setIsAutocompleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Nombres existentes para evitar duplicados al clasificar
+      const existingNames = pantry.map(p => p.ingredient_name);
+
+      // Usamos Promise.all para clasificar TODOS los faltantes en paralelo usando la IA
+      const classifiedItemsPromises = liveRecipe.missingIngredients.map(async (ing: any) => {
+        const qtyFloat = parseFloat(ing.qty) || 1;
+        const roundedQty = Math.ceil(qtyFloat); // Redondeo al entero superior
+        
+        // Valores por defecto en caso de que la IA tarde o falle
+        let category = "Otros";
+        let icon = "🛒";
+        let location = "Alacena";
+        let daysToExpire = 7;
+        let correctedName = ing.name;
+
+        try {
+          const response = await fetch('/api/classify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ingredient: ing.name, existingPantry: existingNames }),
+          });
+          const data = await response.json();
+          
+          if (data?.category) {
+            category = data.category;
+            icon = data.icon || icon;
+            location = data.location || location;
+            daysToExpire = data.daysToExpire || daysToExpire;
+            correctedName = data.correctedName || correctedName;
+          }
+        } catch (error) {
+          console.error(`Error al clasificar ${ing.name} con IA. Usando valores por defecto.`);
+        }
+
+        // Calculamos la fecha real de caducidad basada en la IA
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + daysToExpire);
+
+        return {
+          user_id: user.id,
+          ingredient_name: correctedName,
+          quantity: roundedQty,
+          unit: ing.unit || "pzas",
+          category: category, 
+          expiration_date: expirationDate.toISOString().split('T')[0],
+          icon: icon,
+          location: location,
+          status: "good"
+        };
+      });
+
+      // Esperamos a que la IA clasifique todos los faltantes
+      const newPantryItems = await Promise.all(classifiedItemsPromises);
+
+      // Insertar masivamente en Supabase
+      const { error } = await supabase.from('pantry_items').insert(newPantryItems);
+      if (error) throw error;
+
+      showToast("Ingredientes procesados por IA y agregados. ¡A cocinar!", "success");
+      setShowMissingModal(false);
+      
+      // Recargar alacena para que el GuidedCookingModal pueda hacer los descuentos reales
+      await loadHistory(false);
+      setIsCooking(true);
+
+    } catch (error) {
+      console.error(error);
+      showToast("Hubo un error al autocompletar los ingredientes.", "error");
+    } finally {
+      setIsAutocompleting(false);
+    }
+  };
+
   // PANTALLA DE CARGA PRINCIPAL
   if (isLoading) {
     return (
@@ -131,7 +232,46 @@ export default function HistoryView() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 pb-10 font-sans min-h-screen bg-[#FFFAE6]">
+    <div className="flex flex-col lg:flex-row gap-8 pb-10 font-sans min-h-screen bg-[#FFFAE6] relative">
+
+      {/* ── TOAST NOTIFICATION ── */}
+      <div 
+        className={`fixed top-8 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform ${
+          toast.show ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'
+        } ${
+          toast.type === 'error' ? 'bg-[#9E2A2B] text-white' :
+          toast.type === 'warning' ? 'bg-[#FFFAE6] border-2 border-[#E09F3E] text-[#b87d2a]' :
+          'bg-[#335C67] text-[#FFF3B0]'
+        }`}
+      >
+        {toast.type === 'error' ? <AlertCircle size={22} /> : toast.type === 'warning' ? <AlertTriangle size={22} /> : <CheckCircle2 size={22} />}
+        <span className="font-bold text-sm">{toast.message}</span>
+      </div>
+
+      {/* ── MODAL DE INGREDIENTES FALTANTES ── */}
+      {showMissingModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-[#335C67]/60 backdrop-blur-sm">
+          <div className="bg-[#FFFAE6] rounded-3xl p-8 w-full max-w-md shadow-2xl text-center relative animate-in fade-in zoom-in duration-200">
+            <button onClick={() => setShowMissingModal(false)} className="absolute top-4 right-4 p-2 hover:bg-black/5 rounded-full transition-colors"><X size={20} className="text-[#5a8a96]"/></button>
+            <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-6">
+              <ShoppingCart size={40} className="text-[#E09F3E]" />
+            </div>
+            <h3 className="font-serif text-2xl font-bold text-[#335C67] mb-4">Te faltan {liveRecipe?.missingIngredients?.length} ingredientes</h3>
+            <p className="text-[#5a8a96] font-medium mb-2">Para preparar <strong className="text-[#335C67]">{liveRecipe?.name}</strong> faltan ingredientes en tu alacena.</p>
+            <p className="text-xs text-[#b87d2a] bg-orange-50 p-3 rounded-xl border border-orange-100 mb-8">
+              ¿Deseas que la IA agregue los ingredientes faltantes a tu alacena (redondeando hacia arriba) para poder cocinar inmediatamente?
+            </p>
+            <div className="flex flex-col gap-3">
+              <button onClick={handleAutocompleteAndCook} disabled={isAutocompleting} className="w-full py-3.5 rounded-2xl bg-[#E09F3E] text-white font-bold shadow-lg hover:bg-[#c98a30] transition-colors flex justify-center items-center gap-2">
+                {isAutocompleting ? <Loader2 className="animate-spin" size={20}/> : <><Sparkles size={20} /> Sí, autocompletar e iniciar</>}
+              </button>
+              <button onClick={handleCancelCooking} disabled={isAutocompleting} className="w-full py-3.5 rounded-2xl bg-white border border-[#335C67]/20 text-[#335C67] font-bold hover:bg-gray-50 transition-colors">
+                No, los conseguiré primero
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── COLUMNA IZQUIERDA ── */}
       <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col gap-6 lg:h-[calc(100vh-6rem)] lg:sticky lg:top-8 overflow-y-auto overflow-x-hidden scrollbar-hide">
@@ -267,9 +407,12 @@ export default function HistoryView() {
                 <div className="bg-[#1a2e33] rounded-3xl p-8 shadow-xl text-center relative overflow-hidden">
                    <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10"><ChefHat size={120} color="#fff"/></div>
                    <h3 className="font-bold text-white mb-6 text-xl relative z-10">¿Listo para la acción?</h3>
-                   <button onClick={() => setIsCooking(true)} className="w-full py-5 rounded-2xl bg-[#E09F3E] hover:bg-[#c98a30] text-white text-lg font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:scale-105 relative z-10">
+                   
+                   {/* ─── BOTÓN MODIFICADO PARA INTERCEPTAR ─── */}
+                   <button onClick={handleStartCooking} className="w-full py-5 rounded-2xl bg-[#E09F3E] hover:bg-[#c98a30] text-white text-lg font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:scale-105 relative z-10">
                      <Flame size={24} /> Iniciar Cocina
                    </button>
+
                    <p className="text-white/60 text-xs mt-4 relative z-10">Esto descontará los ingredientes ({displayServings} pax) de tu alacena al finalizar.</p>
                 </div>
 
@@ -309,7 +452,7 @@ export default function HistoryView() {
             </div>
           </div>
         ) : (
-          <div className="w-full h-full bg-white/50 rounded-3xl border-2 border-dashed border-[#335C67]/20 flex flex-col items-center justify-center p-12 text-center shadow-sm">
+          <div className="w-full h-[80vh] bg-white/50 rounded-3xl border-2 border-dashed border-[#335C67]/20 flex flex-col items-center justify-center p-12 text-center shadow-sm">
             <ChefHat size={80} className="text-[#335C67]/20 mb-6" />
             <h2 className="text-3xl font-serif font-bold text-[#335C67] mb-3">Tu Historial de Cocina</h2>
             <p className="text-[#5a8a96] max-w-md text-lg">Busca recetas anteriores o revisa tus platos favoritos para cocinarlos de nuevo.</p>

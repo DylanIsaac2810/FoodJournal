@@ -47,7 +47,7 @@ export default function DashboardLayout({
         <div className="flex items-center gap-3">
           <img 
             src="/img/logo.png" 
-            alt="Food Journey Logo" 
+            alt="Food Journal Logo" 
             className="h-10 w-10 object-contain shrink-0 drop-shadow-sm" 
           />
           <span className="text-[#FFF3B0] font-bold text-xl tracking-wide" style={{ fontFamily: "'Playfair Display', serif" }}>
@@ -74,7 +74,7 @@ export default function DashboardLayout({
           <div className={`flex items-center gap-3 overflow-hidden ${isDesktopCollapsed ? 'justify-center w-full px-0' : 'w-full'}`}>
             <img 
               src="/img/logo.png" 
-              alt="Logo Food Journey" 
+              alt="Logo Food Journal" 
               className={`object-contain shrink-0 drop-shadow-sm transition-all duration-300 ${isDesktopCollapsed ? 'h-10 w-10' : 'h-12 w-12'}`}
             />
             {!isDesktopCollapsed && (
