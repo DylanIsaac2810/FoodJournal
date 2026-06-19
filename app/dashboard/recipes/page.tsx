@@ -1,11 +1,11 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   ChefHat, Clock, Users, Plus, Minus,
   Star, ShoppingCart, AlertCircle, CheckCircle2, Timer,
-  Sparkles, Camera, SlidersHorizontal, X, ChevronDown,
-  ChevronUp, Flame, History, Heart, Loader2
+  Sparkles, SlidersHorizontal, X, ChevronDown,
+  ChevronUp, Flame, History, Heart, Loader2, AlertTriangle
 } from "lucide-react";
 import { createClient } from '@/utils/supabase/client';
 
@@ -120,11 +120,15 @@ export default function RecipeView() {
   const [generating, setGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // ─── ESTADO PARA LA NOTIFICACIÓN TOAST ───
+  const [toast, setToast] = useState<{show: boolean, message: string, type: 'success' | 'error' | 'warning'}>({ show: false, message: "", type: "success" });
 
   const totalFilters = Object.values(selectedFilters).flat().length;
+
+  const showToast = (message: string, type: 'success' | 'error' | 'warning' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3500);
+  };
 
   useEffect(() => { loadHistory(true); }, []);
 
@@ -159,32 +163,6 @@ export default function RecipeView() {
 
   const clearFilters = () => setSelectedFilters({});
 
-  const startCamera = async () => {
-    setIsCameraOpen(true);
-    setCapturedImage(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err) {
-      alert("No se pudo acceder a la cámara.");
-      setIsCameraOpen(false);
-    }
-  };
-
-  const takePhoto = () => {
-    if (!videoRef.current) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    canvas.getContext("2d")?.drawImage(videoRef.current, 0, 0);
-    const imageBase64 = canvas.toDataURL("image/jpeg");
-    setCapturedImage(imageBase64);
-    
-    const stream = videoRef.current.srcObject as MediaStream;
-    stream?.getTracks().forEach(track => track.stop());
-    setIsCameraOpen(false);
-  };
-
   const handleGenerate = async () => {
     setGenerating(true);
     try {
@@ -207,8 +185,8 @@ export default function RecipeView() {
           profile: profile || { allergies: [], dietary_preferences: [], cooking_tools: [] },
           pantry: pantryInfo,
           filters: flatFilters,
-          servings: servings,
-          imageBase64: capturedImage
+          servings: servings
+          // Eliminamos la llamada de imageBase64
         })
       });
 
@@ -225,17 +203,19 @@ export default function RecipeView() {
         });
       }
 
-      setCapturedImage(null);
       await loadHistory(false);
       
       const { data: newHistory } = await supabase.from('saved_recipes').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
       if(newHistory && newHistory.length > 0) {
         setSelectedRecipe({ db_id: newHistory[0].id, is_favorite: newHistory[0].is_favorite, ...newHistory[0].recipe_data });
       }
+      
+      showToast("¡Nuevas recetas generadas con éxito!", "success");
 
     } catch (error: any) {
       console.error(error);
-      alert("Error al generar recetas. Revisa tu conexión o intenta con menos filtros.");
+      // REEMPLAZO DEL ALERT FEO
+      showToast("Error al generar recetas. Revisa tu conexión o intenta con menos filtros.", "error");
     } finally {
       setGenerating(false);
     }
@@ -263,6 +243,20 @@ export default function RecipeView() {
   return (
     <div className="flex flex-col lg:flex-row gap-8 pb-10 font-sans min-h-screen bg-[#FFFAE6]">
       
+      {/* ── TOAST NOTIFICATION ── */}
+      <div 
+        className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform ${
+          toast.show ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'
+        } ${
+          toast.type === 'error' ? 'bg-[#9E2A2B] text-white' :
+          toast.type === 'warning' ? 'bg-[#FFFAE6] border-2 border-[#E09F3E] text-[#b87d2a]' :
+          'bg-[#335C67] text-[#FFF3B0]'
+        }`}
+      >
+        {toast.type === 'error' ? <AlertCircle size={22} /> : toast.type === 'warning' ? <AlertTriangle size={22} /> : <CheckCircle2 size={22} />}
+        <span className="font-bold text-sm">{toast.message}</span>
+      </div>
+
       {/* ── COLUMNA IZQUIERDA (CONTROLES Y LISTA) ── */}
       <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col gap-6 lg:h-[calc(100vh-6rem)] lg:sticky lg:top-8 overflow-y-auto overflow-x-hidden scrollbar-hide">
         
@@ -273,7 +267,7 @@ export default function RecipeView() {
           </h2>
           <p className="text-[#5a8a96] text-sm mb-6">Genera recetas basadas en tu alacena</p>
 
-          <div className="p-4 rounded-2xl mb-4 bg-[#FFFAE6] border border-[#335C67]/10">
+          <div id="tour-recipes-servings" className="p-4 rounded-2xl mb-4 bg-[#FFFAE6] border border-[#335C67]/10">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-1.5 font-bold text-[#335C67] text-sm"><Users size={16} /> Porciones</div>
               <span className="px-3 py-1 rounded-full bg-[#335C67] text-[#FFF3B0] font-mono font-bold">{servings}</span>
@@ -283,6 +277,7 @@ export default function RecipeView() {
           </div>
 
           <button
+            id="tour-recipes-filters"
             onClick={() => setDrawerOpen(true)}
             className="flex items-center justify-between w-full px-4 py-3.5 rounded-2xl bg-white border border-[#335C67]/20 hover:bg-gray-50 transition-colors mb-4"
           >
@@ -312,25 +307,19 @@ export default function RecipeView() {
             </div>
           )}
 
+          {/* BOTÓN GENERAR (YA SIN CÁMARA) */}
           <div className="flex gap-2">
-            <button onClick={startCamera} className="p-3.5 rounded-2xl bg-gray-100 text-[#335C67] hover:bg-gray-200 transition-colors shadow-sm"><Camera size={22} /></button>
-            <button onClick={handleGenerate} disabled={generating} className="flex-1 py-3.5 rounded-2xl bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-50">
+            <button id="tour-recipes-generate" onClick={handleGenerate} disabled={generating} className="w-full py-3.5 rounded-2xl bg-[#9E2A2B] hover:bg-[#7d2122] text-white font-bold flex items-center justify-center gap-2 transition-colors shadow-md disabled:opacity-50">
               {generating ? <><Loader2 className="animate-spin" size={20} /> Pensando recetas...</> : "Generar Recetas"}
             </button>
           </div>
-
-          {capturedImage && (
-             <div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#E09F3E] bg-[#FFFAE6] p-3 rounded-xl border border-[#E09F3E]/20">
-               <CheckCircle2 size={16}/> Foto lista. La IA analizará los ingredientes visuales.
-             </div>
-          )}
         </div>
 
         {/* HISTORIAL */}
         <h3 className="font-bold text-[#335C67] mt-2 flex items-center gap-2"><History size={16}/> Historial de IA</h3>
         
         {/* CONTENEDOR DE LISTA CON PADDING PARA EVITAR CORTES DE BORDE */}
-        <div className="flex flex-col gap-4 px-2 py-1 pb-4">
+        <div id="tour-recipes-history" className="flex flex-col gap-4 px-2 py-1 pb-4">
           {recipes.length === 0 && <p className="text-sm text-gray-500 bg-white p-4 rounded-xl text-center shadow-sm border border-gray-100">No hay recetas generadas aún.</p>}
           {recipes.map((recipe, idx) => (
             <div key={idx} className="relative group">
@@ -359,7 +348,7 @@ export default function RecipeView() {
       </div>
 
       {/* ── COLUMNA DERECHA (VISTA DE RECETA EXPANDIDA) ── */}
-      <div className="flex-1 flex flex-col lg:h-[calc(100vh-6rem)] lg:sticky lg:top-8">
+      <div id="tour-recipes-main-view" className="flex-1 flex flex-col lg:h-[calc(100vh-6rem)] lg:sticky lg:top-8">
         {selectedRecipe ? (
           <div className="bg-white rounded-3xl overflow-y-auto overflow-x-hidden shadow-sm border border-[#335C67]/10 h-full flex flex-col relative">
             <div className="relative h-80 w-full flex-shrink-0 group overflow-hidden">
@@ -482,16 +471,6 @@ export default function RecipeView() {
       </div>
 
       <FiltersDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} selected={selectedFilters} onToggle={toggleFilter} onClear={clearFilters} />
-      
-      {isCameraOpen && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4">
-          <video ref={videoRef} autoPlay playsInline className="w-full max-w-md rounded-2xl bg-black mb-4 border border-white/20" />
-          <div className="flex gap-4">
-            <button onClick={() => { setIsCameraOpen(false); videoRef.current?.srcObject?.getTracks().forEach((t:any) => t.stop()); }} className="px-6 py-3 rounded-full bg-white/20 text-white font-bold hover:bg-white/30">Cancelar</button>
-            <button onClick={takePhoto} className="px-6 py-3 rounded-full bg-[#E09F3E] text-white font-bold flex items-center gap-2 hover:bg-[#c98a30]"><Camera size={20} /> Tomar Foto</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
